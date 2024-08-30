@@ -42,4 +42,30 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+ 
+
+    public function getAvatarAttribute()
+    {
+        return $this->photo ? asset('storage/' . $this->photo) : asset('/storage/p2.png');
+    }
+    
+    
+    
+public function getFullnameAttribute()
+{
+    $middleInitial = $this->middleinitial;
+    return "{$this->prefixname}. {$this->firstname} {$middleInitial} {$this->lastname} {$this->suffixname}";
+}
+
+// Accessor for middle initial
+public function getMiddleinitialAttribute()
+{
+    if ($this->middlename) {
+        return strtoupper(substr($this->middlename, 0, 1)) . '.';
+    }
+    return '';
+}
+
+    
 }

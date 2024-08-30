@@ -11,15 +11,25 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::all(); // Fetch all users from the database
-        return view('users.index', compact('users')); // Pass the users to the view
+        $users = User::all()->each->append('avatar');
+        return view('users.index', compact('users'));
     }
+
 
     public function show(User $user)
     {
-        return response()->json($user);
+        return response()->json([
+            'id' => $user->id,
+            'prefixname' => $user->prefixname,
+            'firstname' => $user->firstname,
+            'middlename' => $user->middlename,
+            'lastname' => $user->lastname,
+            'suffixname' => $user->suffixname,
+            'username' => $user->username,
+            'email' => $user->email,
+            'photo' => $user->avatar, // Use the avatar accessor
+        ]);
     }
-
     public function store(Request $request)
 {
     // Validate the form input
@@ -39,7 +49,7 @@ class UserController extends Controller
     $photoPath = null;
     if ($request->hasFile('photo')) {
         $photo = $request->file('photo');
-        $photoPath = $photo->store('photos', 'public');
+        $photoPath = $photo->store('profile_photos', 'public');
     }
 
     // Create a new user
@@ -56,13 +66,10 @@ class UserController extends Controller
     ]);
 
     // Redirect or show success message
-    return redirect()->back()->with('success', 'User created successfully!');
+    return redirect()->route('users.index')->with('success', 'Added Succesfully');
 }
 
-public function edit(User $user)
-{
-    return response()->json($user);
-}
+
 public function destroy(User $user)
 {
    
@@ -71,28 +78,48 @@ public function destroy(User $user)
  
     return response()->json(['success' => 'User deleted successfully!']);
 }
-public function trashed()
-{
-    $trashedUsers = User::onlyTrashed()->get(); 
-    return view('users.trashed', compact('trashedUsers'));
-}
+/**
+     * Display a listing of the trashed users.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function trasheds()
+    {
+        $trashedUsers = User::onlyTrashed()->get();
+        return view('users.trashed', compact('trashedUsers'));
+    }
+    
 
-public function trasheds()
-{
-   
-    $trashedUsers = User::onlyTrashed()->get(); 
-    return view('users.trashed', compact('trashedUsers'));
-}
+    /**
+     * Restore a soft-deleted user.
+     *
+     * @param  int  $userId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function restore($userId)
+    {
+        $user = User::withTrashed()->findOrFail($userId);
+        $user->restore();
+
+        return redirect()->route('users.trashed')->with('success', 'User restored successfully.');
+    }
+
+    /**
+     * Permanently delete a user.
+     *
+     * @param  int  $userId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function delete($userId)
+    {
+        $user = User::withTrashed()->findOrFail($userId);
+        $user->forceDelete();
+
+        return redirect()->route('users.trashed')->with('success', 'User deleted permanently.');
+    }
 
 
 
-public function restore($id)
-{
-    $user = User::withTrashed()->findOrFail($id);
-    $user->restore(); // Restore the soft-deleted user
-
-    return redirect()->route('users.trashed')->with('success', 'User restored successfully.');
-}
 
 public function forceDelete($id)
 {
@@ -102,6 +129,11 @@ public function forceDelete($id)
     return redirect()->route('users.trashed')->with('success', 'User permanently deleted!');
 }
 
+
+public function edit(User $user)
+{
+    return view('users.edit', compact('user'));
+}
 
 public function update(Request $request, User $user)
 {
@@ -121,7 +153,7 @@ public function update(Request $request, User $user)
     // Handle the photo upload
     if ($request->hasFile('photo')) {
         $photo = $request->file('photo');
-        $photoPath = $photo->store('photos', 'public');
+        $photoPath = $photo->store('profile_photos', 'public');
         $user->photo = $photoPath;
     }
 
@@ -142,8 +174,9 @@ public function update(Request $request, User $user)
     $user->save();
 
     // Return success response
-    return response()->json(['success' => 'User updated successfully!']);
+    return redirect()->route('users.index')->with('success', 'User updated successfully!');
 }
+
 
 
 }

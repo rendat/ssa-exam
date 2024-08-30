@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SoftDeleteController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -30,17 +31,18 @@ Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
 Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
+// Web Routes
 Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
 Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
 
 
 
 
-// In your routes/web.php file
-Route::put('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
 
-Route::delete('/users/{user}/force-delete', [UserController::class, 'forceDelete'])->name('users.forceDelete');
 
 Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
 Route::get('/trashed', [UserController::class, 'trasheds'])->name('users.trashed');
+
+
+Route::softDeletes('users', UserController::class);
