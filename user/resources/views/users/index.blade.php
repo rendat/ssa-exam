@@ -3,6 +3,17 @@
 @section('content')
 <div class="container">
     <h1 class="mb-4">Users List</h1>
+    
+    <!-- Button to Open Modal for Creating a New User -->
+    <button type="button" class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        Create New User
+    </button>
+    <!-- Button to View Trashed Users -->
+    <a href="{{ route('users.trashed') }}" class="btn btn-secondary mb-4">
+        View Trashed Users
+    </a>
+
+    <!-- Users Table -->
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -40,11 +51,20 @@
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#userModal" onclick="loadUserData({{ $user->id }})">
                             View
                         </button>
+                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" onclick="populateEditForm({{ $user->id }})">
+                            Edit
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteUser({{ $user->id }})">
+                            Soft Delete
+                        </button>
+                        
                     </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
+
+    @include('users.create')
 
     <!-- User Details Modal -->
     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
@@ -63,9 +83,30 @@
             </div>
         </div>
     </div>
-</div>
+        @include('users.edit')
+</div>  
 
 <script>
+    function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user?')) {
+        fetch(`/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User deleted successfully!');
+                location.reload(); // Refresh the page to reflect changes
+            } else {
+                alert('Error deleting user.');
+            }
+        });
+    }
+}
+
 function loadUserData(userId) {
     fetch(`/users/${userId}`)
         .then(response => response.json())
@@ -88,5 +129,30 @@ function loadUserData(userId) {
             `;
         });
 }
+
+function populateEditForm(userId) {
+    fetch(`/users/${userId}/edit`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editUserForm').action = `/users/${data.id}`;
+            document.getElementById('prefixname').value = data.prefixname;
+            document.getElementById('firstname').value = data.firstname;
+            document.getElementById('middlename').value = data.middlename;
+            document.getElementById('lastname').value = data.lastname;
+            document.getElementById('suffixname').value = data.suffixname;
+            document.getElementById('username').value = data.username;
+            document.getElementById('email').value = data.email;
+
+            // Display the existing photo if available
+            const photoPreview = document.getElementById('photoPreview');
+            if (data.photo) {
+                photoPreview.innerHTML = `<img src="/storage/${data.photo}" alt="User Photo" width="100">`;
+            } else {
+                photoPreview.innerHTML = 'No Photo';
+            }
+        });
+}
+
+
 </script>
 @endsection
