@@ -23,12 +23,13 @@ Auth::routes();
 
 
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
 
 
 
 
 Route::middleware(['auth'])->group(function () {
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
 Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
